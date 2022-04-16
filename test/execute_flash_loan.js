@@ -24,9 +24,9 @@ contract("executeFlashLoan", function (accounts) {
     let dollarInstance = await Dollar.deployed();
     let borrowerInstance = await Borrower.deployed();
     let balanceBefore = await dollarInstance.balanceOf(Borrower.address);
-    console.log(balanceBefore.toString())
     await borrowerInstance.executeFlashLoan(10000);
     let balanceAfter = await dollarInstance.balanceOf(Borrower.address);
-    console.log(balanceAfter.toString());
+    //profit of 500$
+    assert.equal(balanceAfter, 500);
   });
 });

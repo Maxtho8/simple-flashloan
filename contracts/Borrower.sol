@@ -12,6 +12,8 @@ contract Borrower is IBorrower, Ownable {
     DealerA private immutable dealerA;
     DealerB private immutable dealerB;
 
+    bool isExecuted = false;
+
     constructor(
         address _lender,
         address _dealerA,
@@ -22,43 +24,51 @@ contract Borrower is IBorrower, Ownable {
         dealerB = DealerB(_dealerB);
     }
 
+    //Execute one time for token allowance
+    modifier oneTimeExecution() {
+        if (!isExecuted) {
+            allowDollarTransfer(address(lender));
+            allowDollarTransfer(address(dealerA));
+            allowCarsTransfer(address(dealerB));
+            isExecuted = true;
+        }
+        _;
+    }
+
     function allowDollarTransfer(address _address) internal {
-        lender.token().approve(_address, type(uint256).max);
+        lender.token().approve(_address, 100000);
     }
 
     function allowCarsTransfer(address _address) internal {
-        dealerA.cars().approve(_address, type(uint256).max);
+        dealerA.cars().approve(_address, 100000);
     }
 
-    function repay(address tokenAddress, uint256 _amount) external {
-        require(0 == 1, "On passe ici");
+    function repay(uint256 _amount) external {
         require(
             msg.sender == address(lender),
             "Only lender can call repay function"
         );
+        // Repay the amount with 5% fees
         require(
-            IERC20(tokenAddress).transfer(address(lender), _amount),
+            lender.token().transfer(
+                address(lender),
+                _amount + (_amount * 5) / 100
+            ),
             "Borrower: could not transfer tokens"
         );
     }
 
     function executeOperation() public {
         dealerA.buyCar();
+        dealerB.sellCar();
     }
 
     // Execute flashLoan
-    function executeFlashLoan(uint256 _amount) external onlyOwner {
-        if (lender.token().allowance(address(this), address(lender)) == 0) {
-            allowDollarTransfer(address(lender));
-        } else if (
-            lender.token().allowance(address(this), address(dealerA)) == 0
-        ) {
-            allowDollarTransfer(address(dealerA));
-        } else if (
-            dealerA.cars().allowance(address(this), address(dealerB)) == 0
-        ) {
-            allowDollarTransfer(address(dealerB));
-        }
+    function executeFlashLoan(uint256 _amount)
+        external
+        oneTimeExecution
+        onlyOwner
+    {
         lender.flashLoan(_amount);
     }
 }
