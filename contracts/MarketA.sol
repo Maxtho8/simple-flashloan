@@ -7,6 +7,7 @@ contract DealerA {
     // The token that represent cars
     IERC20 public cars;
     IERC20 public dollar;
+    uint256 CAR_PRICE = 10000;
 
     constructor(IERC20 _cars, IERC20 _dollar) {
         cars = _cars;
@@ -15,7 +16,7 @@ contract DealerA {
 
     function buyCar() public {
         //Check that the price is good
-        dollar.transferFrom(msg.sender, address(this), 10000);
+        dollar.transferFrom(msg.sender, address(this), CAR_PRICE);
         cars.transfer(msg.sender, 1);
     }
 
@@ -26,6 +27,6 @@ contract DealerA {
             "You don't have any car to sell"
         );
         cars.transferFrom(msg.sender, address(this), 1);
-        dollar.transfer(msg.sender, 10000 ether);
+        dollar.transfer(msg.sender, CAR_PRICE);
     }
 }
